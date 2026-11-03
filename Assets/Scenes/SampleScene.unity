@@ -1396,8 +1396,12 @@ MonoBehaviour:
   wheel2: {fileID: 332490682}
   wheel3: {fileID: 318983478}
   wheel4: {fileID: 2049018629}
-  driveSpeed: 600
-  steerSpeed: 40
+  maxSteerAngle: 35
+  steerRate: 90
+  returnRate: 150
+  driveSpeed: 800
+  brakePower: 3000
+  decelerationPower: 1000
 --- !u!1 &2000077589
 GameObject:
   m_ObjectHideFlags: 0
