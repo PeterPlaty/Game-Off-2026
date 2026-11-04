@@ -8,25 +8,38 @@ public class MeshGenerator : MonoBehaviour
 
     Vector3[] vertices;
     int[] triangles;
+    Color[] colors;
 
     public int xSize = 20;
     public int zSize = 20;
-    public int unitSize = 1;
-    float noiseScale = .15f;
-    float maxHeight  = 30f;
+    public int unitSize = 1;    // how big a triangle is
+    public float noise01Scale = .2f;
+    public float noise01Amp  = 2f;
+    public float noise02Scale = .4f;
+    public float noise02Amp = 4f;
+    public float noise03Scale = .8f;
+    public float noise03Amp = 8f;
+    public Gradient gradient;
+
+    float minTerrainHeight;
+    float maxTerrainHeight;
 
     void Start()
     {
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
     
+
+        // Add collisions at runtime
+        //MeshCollider collider = gameObject.AddComponent<MeshCollider>();
+        //collider.sharedMesh = mesh;
+    }
+
+    private void Update()
+    {
         // Generate mesh shape
         CreateShape();
         UpdateMesh();
-
-        // Add collisions at runtime
-        MeshCollider col = gameObject.AddComponent<MeshCollider>();
-        col.sharedMesh = mesh;
     }
 
     void CreateShape()
@@ -38,9 +51,14 @@ public class MeshGenerator : MonoBehaviour
         {
             for(int x=0; x<=xSize; x++)
             {
-                float y=Mathf.PerlinNoise(x*noiseScale, z*noiseScale) * maxHeight;
+                float y = GetNoiseSample(x, z);
+                vertices[i] = new Vector3(x * unitSize, y, z * unitSize);
 
-                vertices[i] = new Vector3(x*unitSize, y, z*unitSize);
+                if (y > maxTerrainHeight)
+                    maxTerrainHeight = y;
+                if (y < minTerrainHeight)
+                    minTerrainHeight = y;
+
                 i++;
             }
         }
@@ -69,6 +87,20 @@ public class MeshGenerator : MonoBehaviour
             // Avoid creating a new triangle when wrapping around
             vert++;
         }
+
+        // Define UVs
+        colors = new Color[vertices.Length];
+
+        for (int i = 0, z = 0; z <= zSize; z++)
+        {
+            for (int x = 0; x <= xSize; x++)
+            {
+                float height = Mathf.InverseLerp(minTerrainHeight, maxTerrainHeight, vertices[i].y);
+                colors[i] = gradient.Evaluate(height);
+                i++;
+            }
+        }
+
     }
 
     void UpdateMesh()
@@ -79,7 +111,19 @@ public class MeshGenerator : MonoBehaviour
         // Give new data
         mesh.vertices = vertices;
         mesh.triangles = triangles;
+        mesh.colors = colors;
 
         mesh.RecalculateNormals();
+    }
+
+    private float GetNoiseSample(int x, int z)
+    {
+        float sample = 0f;
+
+        sample += Mathf.PerlinNoise(x * noise01Scale / xSize, z * noise01Scale / zSize) * noise01Amp;
+        sample += Mathf.PerlinNoise(x * noise02Scale / xSize, z * noise02Scale / zSize) * noise02Amp;
+        sample += Mathf.PerlinNoise(x * noise03Scale / xSize, z * noise03Scale / zSize) * noise03Amp;
+
+        return sample;
     }
 }
