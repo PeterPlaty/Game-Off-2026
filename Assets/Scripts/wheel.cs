@@ -1,6 +1,5 @@
 using UnityEngine;
-
-public class wheel : MonoBehaviour
+public class Wheel : MonoBehaviour
 {
     public WheelCollider wheelCollider;
     public Transform wheelMesh; //parent object of wheel

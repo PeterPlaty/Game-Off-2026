@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-
-public class car : MonoBehaviour
+public class Car : MonoBehaviour
 {
 	public Rigidbody rigid; // car's rigidbody
 	public WheelCollider wheel1, wheel2, wheel3, wheel4; // wheel colliders
@@ -42,38 +41,58 @@ public class car : MonoBehaviour
 	void FixedUpdate() // loop used physics related actions
 	{
 		// Move forwards/backwards
-		currentSpeed = Vector3.Dot(rigid.linearVelocity, -transform.forward);
-		float motor = 0;
-		float brake = 0;
-
-		if(inputAccelerate.IsPressed())
-		{
-			if(currentSpeed > -threshold) motor = -driveSpeed;	//forward
-			else brake = brakePower;							//brake
-		}
-		else if(inputBrake.IsPressed())
-		{
-			if(currentSpeed > threshold) brake = brakePower;	//forward
-			else motor = driveSpeed;							//reverse
-		}
-		else 
-		{
-			brake = decelerationPower;
-		}
-		
-		// Spin wheels
-		foreach(var wheel in new[] { wheel1, wheel2, wheel3, wheel4 })
-		{
-			wheel.motorTorque = motor;
-			wheel.brakeTorque = brake;
-		}
+		Drive();
 
 		// Steer
-		float targetSteer = maxSteerAngle * Mathf.Round(moveValue.x);
-		float rate = Mathf.Approximately(moveValue.x, 0f) ? returnRate : steerRate;
-		currentSteer = Mathf.MoveTowards(currentSteer, targetSteer, rate * Time.fixedDeltaTime);
+		Steer();
 
-		wheel1.steerAngle = currentSteer;
-		wheel2.steerAngle = currentSteer;
-	}
+        // Flip back up if tilted
+        float tilt = Vector3.Angle(transform.up, Vector3.up);
+        if (tilt > 45f)
+        {
+            Vector3 torqueAxis = Vector3.Cross(transform.up, Vector3.up);
+            rigid.AddTorque(torqueAxis * 5f, ForceMode.Acceleration);
+        }
+    }
+
+	void Drive()
+	{
+        currentSpeed = Vector3.Dot(rigid.linearVelocity, -transform.forward);
+        float motor = 0;
+        float brake = 0;
+
+        if (inputAccelerate.IsPressed())
+        {
+            if (currentSpeed > -threshold) motor = -driveSpeed; //forward
+            else brake = brakePower;                            //brake
+        }
+        else if (inputBrake.IsPressed())
+        {
+            if (currentSpeed > threshold) brake = brakePower;   //forward
+            else motor = driveSpeed;                            //reverse
+        }
+        else
+        {
+            brake = decelerationPower;
+        }
+
+        // Spin wheels
+        foreach (var wheel in new[] { wheel1, wheel2, wheel3, wheel4 })
+        {
+            wheel.motorTorque = motor;
+            wheel.brakeTorque = brake;
+        }
+    }
+
+	void Steer()
+	{
+        float targetSteer = maxSteerAngle * Mathf.Round(moveValue.x);
+        float rate = Mathf.Approximately(moveValue.x, 0f) ? returnRate : steerRate;
+        currentSteer = Mathf.MoveTowards(currentSteer, targetSteer, rate * Time.fixedDeltaTime);
+
+        wheel1.steerAngle = currentSteer;
+        wheel2.steerAngle = currentSteer;
+    }
+
+
 }
